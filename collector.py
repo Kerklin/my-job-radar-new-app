@@ -7,8 +7,13 @@ Usage:
 Safety rules:
 - Expired vacancies are excluded.
 - Duplicates are removed (canonical URL first, fuzzy fingerprint second).
-- If every configured source fails, the previous feed is preserved and the
-  process exits with code 3. An empty file never overwrites a valid feed.
+- If at least one configured source was attempted and every source failed, the
+  previous feed is preserved and the process exits with code 3. An empty file
+  never overwrites a valid feed.
+- If NO source was attempted at all (no RELIEFWEB_APPNAME, no ATS boards
+  configured), the feed is still preserved but the process exits 0 with a
+  `no_sources_configured` status and a loud warning instead of failing red:
+  misconfiguration is not an outage.
 """
 
 from __future__ import annotations
@@ -235,6 +240,24 @@ def build_sample_records() -> list[JobRecord]:
 # Main
 # ---------------------------------------------------------------------------
 
+def _any_source_attempted(status: dict, appname: str | None, cfg: dict) -> bool:
+    """True if at least one source actually attempted a fetch this run.
+
+    'Nothing configured' (no appname, no ATS boards) is not an outage;
+    the feed is preserved but the run is not a failure.
+    """
+    src = cfg.get("sources", {})
+    rw = status.get("reliefweb", {})
+    if rw.get("enabled", True) and appname:
+        return True
+    for name in ("greenhouse", "lever", "ashby"):
+        scfg = src.get(name, {})
+        if scfg.get("enabled", True) and scfg.get("boards"):
+            return True
+    # Any recorded hard failure counts as an attempt too.
+    return any(int(s.get("failed", 0) or 0) > 0 for s in status.values())
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Damir Job Radar collector")
     parser.add_argument("--sample", action="store_true",
@@ -262,7 +285,17 @@ def main(argv: list[str] | None = None) -> int:
         if not records:
             total_collected = sum(s.get("collected", 0) for s in status.values())
             if total_collected == 0 and args.output.exists() and args.output.stat().st_size > 0:
-                # All sources failed and we have an existing feed: do NOT overwrite it.
+                if not _any_source_attempted(status, appname, cfg):
+                    # Nothing was attempted, so this is a configuration gap, not
+                    # an outage: keep the feed, stay honest, don't cry wolf.
+                    logger.warning("No job sources are configured (ReliefWeb skipped: no "
+                                   "RELIEFWEB_APPNAME; no ATS boards in config.yaml). "
+                                   "Feed preserved at %s - set RELIEFWEB_APPNAME or add boards to start collecting.",
+                                   args.output)
+                    write_collection_status({"ok": False, "reason": "no_sources_configured",
+                                             "sources": status, "feed_preserved": True})
+                    return 0
+                # At least one source was attempted and all failed: do NOT overwrite the feed.
                 logger.error("All sources failed (%s). Keeping existing feed at %s.",
                              ", ".join(f"{k}: {'; '.join(v.get('errors', [])[:1]) or 'no records'}" for k, v in status.items()),
                              args.output)

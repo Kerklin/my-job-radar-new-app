@@ -51,6 +51,9 @@ jobs:
               echo '```json'
               cat data/collection_status.json
               echo '```'
+              if grep -q '"no_sources_configured"' data/collection_status.json; then
+                echo "::warning::No job sources configured - RELIEFWEB_APPNAME secret not set and no ATS boards in config.yaml. Existing feed preserved; add a source to start collecting."
+              fi
             else
               echo "No collection_status.json was produced."
             fi

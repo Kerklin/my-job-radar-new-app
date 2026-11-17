@@ -63,8 +63,11 @@ Open http://localhost:8501
    - Repo → **Actions → Collect jobs daily → Run workflow**
 
 The workflow runs the test suite first, then the collector, then commits
-`data/latest_jobs.csv` **only if it changed**. If *all* sources fail, the previous feed is
-kept and the run fails loudly instead of publishing an empty feed.
+`data/latest_jobs.csv` **only if it changed**. If at least one source was attempted and *all* of them
+fail, the previous feed is kept and the run fails loudly instead of publishing an empty feed.
+If no source is configured at all (no `RELIEFWEB_APPNAME` secret and no ATS boards in
+`config.yaml`), the run stays green with a prominent `no_sources_configured` warning in the job
+summary instead of a false outage alarm — the feed is still preserved untouched.
 
 > ReliefWeb requires an approved `appname`. Without the secret, ReliefWeb is skipped and you
 > still get any configured ATS feeds + the sample dataset.
@@ -141,6 +144,7 @@ Or upload the folder via GitHub's **Add file → Upload files**.
 |---|---|
 | Dashboard shows "Feed last updated: never" | Run `python collector.py --sample`, or check **Actions → Collect jobs daily** logs; ensure the workflow has `contents: write` permission. |
 | "All sources failed" banner | ReliefWeb `RELIEFWEB_APPNAME` missing/not approved; check the Action log. The previous feed is preserved automatically. |
+| Green run but a `no_sources_configured` warning | Nothing was collected by design: no `RELIEFWEB_APPNAME` secret and no ATS boards in `config.yaml`. Set the secret (§4) or add boards (§5); the old feed stays live meanwhile. |
 | ReliefWeb skipped locally | `setx RELIEFWEB_APPNAME "your-appname"` then restart the terminal (or use a `.env` loader of your choice — secrets are never committed). |
 | Empty Low-scoring list | Most jobs fail the penalties/caps. Remove `--sample`, add ATS boards, or lower *Minimum match score*. |
 | `pip install` fails | Use the venv from §3; upgrade pip; ensure Python 3.12. |

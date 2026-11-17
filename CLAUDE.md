@@ -27,7 +27,7 @@ streamlit run streamlit_app.py
 3. **Mandatory unmet ⇒ disqualified.** Language native-requirements, nationality restrictions, demonstrably unmet degrees. Licences are *uncertain*, not auto-disqualified.
 4. **No secrets in the repo.** `RELIEFWEB_APPNAME` comes from env / Streamlit secrets / GitHub Actions secrets only.
 5. **A source failure never kills the run.** Each adapter catches its own exceptions; `collect_all` isolates crashes.
-6. **All-sources-failed must not overwrite the last valid feed** (collector exits 3; workflow keeps going to the summary step).
+6. **All-sources-failed must not overwrite the last valid feed** (collector exits 3 when at least one source was attempted and everything failed; when NOTHING was configured/attempted, exits 0 with a `no_sources_configured` status + loud warning instead — feed preserved either way; workflow keeps going to the summary step).
 7. **Safe CSV export.** Every user-controlled string passes `csv_safe` (formula injection). No `unsafe_allow_html` anywhere.
 8. **Expired jobs are removed** before scoring/sorting. Missing closing date = kept + flagged uncertain.
 9. **Dedup**: canonical URL first (scheme/host/www/query/fragment/slash stripped), then RapidFuzz `token_set_ratio ≥ 88` on `org + title + location`.
