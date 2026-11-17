@@ -67,7 +67,18 @@ The workflow runs the test suite first, then the collector, then commits
 fail, the previous feed is kept and the run fails loudly instead of publishing an empty feed.
 If no source is configured at all (no `RELIEFWEB_APPNAME` secret and no ATS boards in
 `config.yaml`), the run stays green with a prominent `no_sources_configured` warning in the job
-summary instead of a false outage alarm — the feed is still preserved untouched.
+summary instead of a false outage alarm — the feed is still preserved untouched. The workflow
+also emits a `::warning::` annotation in the job summary when `no_sources_configured` is present.
+
+**Exit codes** (`python collector.py`):
+
+| Code | Meaning | Feed |
+|---|---|---|
+| 0 | Collection OK — **or** no source was configured/attempted (`reason: no_sources_configured` in `data/collection_status.json`) | Preserved/written normally; never overwritten by an empty run |
+| 3 | At least one source was attempted and *all* of them failed (`reason: all_sources_failed`) | Previous feed preserved; run marked failed |
+
+CI housekeeping: the workflow pins `ubuntu-24.04` and uses Node 24 actions
+(`actions/checkout@v7`, `actions/setup-python@v7`).
 
 > ReliefWeb requires an approved `appname`. Without the secret, ReliefWeb is skipped and you
 > still get any configured ATS feeds + the sample dataset.
