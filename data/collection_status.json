@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "sample_mode": true,
+  "total_written": 11,
+  "expired_removed": 1,
+  "duplicates_removed": 0,
+  "sources": {
+    "sample": {
+      "enabled": true,
+      "collected": 12,
+      "skipped": 0,
+      "failed": 0,
+      "errors": []
+    }
+  },
+  "collected_at": "2026-11-17T15:07:05+00:00"
+}

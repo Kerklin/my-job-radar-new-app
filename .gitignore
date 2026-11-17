@@ -1,0 +1,24 @@
+# Secrets
+.env
+.env.*
+.streamlit/secrets.toml
+*.key
+*.pem
+
+# Virtual environments & caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local runtime data (the feed is committed intentionally by the Action)
+data/jobs.db
+data/user_status.csv
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db

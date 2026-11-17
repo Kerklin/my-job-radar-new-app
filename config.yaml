@@ -1,0 +1,343 @@
+# Damir Job Radar - configuration
+# This file is the single source of truth for the candidate profile,
+# scoring model, keywords, exclusion rules and job sources.
+# No secrets belong in this file. RELIEFWEB_APPNAME comes from the
+# environment or Streamlit secrets.
+
+candidate:
+  name: "Damir Hadžić"
+  location: "Sarajevo, Bosnia and Herzegovina"
+  headline: "Construction Engineer - PhD in Architectural Engineering, PMP certified"
+  seniority: "senior"
+  profile_years: 12            # configured professional experience, used for seniority matching
+  native_languages: ["bosnian", "croatian", "serbian"]
+  # Only languages with a level we are willing to state are confirmed.
+  confirmed_languages:
+    english: "professional"
+  # French and Italian are known but their levels are NOT confirmed.
+  unconfirmed_languages:
+    french: true
+    italian: true
+  education:
+    - "PhD in Architectural Engineering"
+    - "MSc in Built Heritage Conservation"
+    - "BSc in Architecture"
+  certifications:
+    - "PMP (Project Management Professional)"
+    - "Bosnia and Herzegovina professional exam (Inženjerska komora / stručni ispit)"
+  licences_confirmed:
+    - "Bosnia and Herzegovina professional engineering exam"
+  licences_not_confirmed:
+    - "UK Chartered Engineer (CEng)"
+    - "APEC Engineer"
+    - "US Professional Engineer (PE)"
+    - "RICS chartered status"
+  driving:
+    category: "B"
+    since: 2003
+    four_wheel_drive: true
+    rough_terrain: true
+  nationality: "bosnia and herzegovina"
+  work_authorization:
+    - "bosnia and herzegovina"
+    - "european union (subject to permit)"
+  sector_experience:
+    - "UNICEF"
+    - "EU-funded programming"
+    - "Bosnia and Herzegovina government and public institutions"
+    - "construction and rehabilitation"
+    - "WASH"
+    - "solar infrastructure"
+    - "built heritage conservation"
+    - "procurement and contract administration"
+
+scoring:
+  # Component maxima. MUST sum to 100 (verified in tests).
+  weights:
+    job_family: 20
+    technical_competencies: 25
+    sector_organization: 15
+    experience_seniority: 15
+    education_certification: 10
+    location_authorization: 5
+    language: 5
+    contract_travel: 5
+  categories:
+    excellent: 85
+    strong: 75
+    good: 65
+    possible: 50
+  # Cap applied when the description is missing or very short.
+  missing_description_cap: 55
+  # Minimum keyword description length before confidence drops.
+  min_description_chars: 200
+
+job_families:
+  # points = title-match points toward the 20-point job_family component.
+  primary:
+    - { phrase: "construction engineer", points: 20 }
+    - { phrase: "civil engineer", points: 20 }
+    - { phrase: "architectural engineer", points: 20 }
+    - { phrase: "infrastructure engineer", points: 18 }
+    - { phrase: "infrastructure specialist", points: 18 }
+    - { phrase: "construction project manager", points: 20 }
+    - { phrase: "rehabilitation project manager", points: 19 }
+    - { phrase: "rehabilitation engineer", points: 19 }
+    - { phrase: "infrastructure manager", points: 18 }
+    - { phrase: "facilities manager", points: 16 }
+    - { phrase: "facilities infrastructure", points: 17 }
+    - { phrase: "wash infrastructure", points: 19 }
+    - { phrase: "wash specialist", points: 16 }
+    - { phrase: "water sanitation hygiene", points: 17 }
+    - { phrase: "procurement specialist", points: 15 }
+    - { phrase: "procurement officer", points: 15 }
+    - { phrase: "procurement manager", points: 16 }
+    - { phrase: "contract management", points: 15 }
+    - { phrase: "contracts manager", points: 15 }
+    - { phrase: "contract administrator", points: 15 }
+    - { phrase: "project manager", points: 14 }
+    - { phrase: "built heritage", points: 18 }
+    - { phrase: "cultural heritage", points: 17 }
+    - { phrase: "heritage specialist", points: 17 }
+    - { phrase: "heritage conservation", points: 17 }
+    - { phrase: "site engineer", points: 17 }
+    - { phrase: "site supervision", points: 17 }
+    - { phrase: "eu-funded", points: 14 }
+    - { phrase: "ipa project", points: 15 }
+    - { phrase: "ipa funding", points: 14 }
+  secondary:
+    - { phrase: "technical adviser", points: 15 }
+    - { phrase: "technical advisor", points: 15 }
+    - { phrase: "programme officer", points: 9 }
+    - { phrase: "program officer", points: 9 }
+    - { phrase: "project coordinator", points: 11 }
+    - { phrase: "operations manager", points: 9 }
+    - { phrase: "operations officer", points: 8 }
+    - { phrase: "monitoring and evaluation", points: 6 }
+    - { phrase: "m&e", points: 6 }
+    - { phrase: "humanitarian coordination", points: 8 }
+    - { phrase: "field officer", points: 8 }
+    - { phrase: "project engineer", points: 16 }
+    - { phrase: "programme manager", points: 12 }
+    - { phrase: "construction manager", points: 18 }
+    - { phrase: "planning engineer", points: 15 }
+    - { phrase: "quantity surveyor", points: 15 }
+    - { phrase: "cost estimator", points: 13 }
+    - { phrase: "solar", points: 12 }
+    - { phrase: "energy infrastructure", points: 15 }
+    - { phrase: "reconstruction", points: 15 }
+    - { phrase: "post-conflict", points: 13 }
+
+# Strong positive competencies. Title hits count 3 points each,
+# description hits 1.5 points each, capped by the weight below.
+technical_competencies:
+  - construction management
+  - rehabilitation
+  - infrastructure
+  - architecture
+  - architectural
+  - civil engineering
+  - site supervision
+  - wash
+  - water sanitation
+  - solar
+  - procurement
+  - tender
+  - tendering
+  - contract administration
+  - fidic
+  - bill of quantities
+  - bills of quantities
+  - cost estimate
+  - cost estimation
+  - budget monitoring
+  - budget
+  - quality assurance
+  - defects liability
+  - handover
+  - stakeholder engagement
+  - government coordination
+  - eu funding
+  - eu/ipa
+  - ipa funds
+  - built heritage
+  - heritage conservation
+  - post-conflict
+  - pmp
+  - project management
+  - procurement
+  - framework contract
+  - works contract
+  - supervision of works
+  - infrastructure rehabilitation
+  - community infrastructure
+  - facilities management
+  - asset management
+  - defects
+  - as-built
+  - construction supervision
+  - tender documentation
+  - technical specifications
+
+# High-value organization / sector signals (substring match on organization name
+# and description text). Org match is worth up to the sector_organization weight.
+sector_signals:
+  organizations:
+    - unicef
+    - undp
+    - unops
+    - wfp
+    - unhcr
+    - iom
+    - osce
+    - unhcr
+    - office for coordination of humanitarian affairs
+    - ocha
+    - european union
+    - european commission
+    - council of europe
+    - icomos
+    - unesco
+    - europa nostra
+    - european investment bank
+    - eib
+    - european bank for reconstruction
+    - ebrd
+    - world bank
+    - african development bank
+    - gi z
+    - giz
+    - kfw
+    - afd
+    - sida
+    - european commission delegation
+    - dai
+    - chesmon
+    - che monics
+    - chesmonics
+    - beit
+    - beit el hanan
+    - ineco
+    - git
+    - svve
+    - monadelphous
+    - beca
+    - arcadis
+    - jacobs
+    - cowi
+    - sweco
+    - systra
+    - schwarz
+    - pm group
+    - gac
+  sectors:
+    - humanitarian
+    - development
+    - infrastructure
+    - construction
+    - wash
+    - heritage
+    - solar
+    - energy
+    - water
+    - sanitation
+    - recovery
+    - reconstruction
+    - european union
+    - international development
+    - public sector
+
+# Negative / exclusion signals. Each entry subtracts points.
+negative_signals:
+  - { phrase: "software engineer", penalty: 40 }
+  - { phrase: "software developer", penalty: 40 }
+  - { phrase: "programmer", penalty: 35 }
+  - { phrase: "coding", penalty: 30 }
+  - { phrase: "data scientist", penalty: 40 }
+  - { phrase: "machine learning", penalty: 35 }
+  - { phrase: "devops", penalty: 35 }
+  - { phrase: "cybersecurity", penalty: 35 }
+  - { phrase: "full stack", penalty: 35 }
+  - { phrase: "front end", penalty: 35 }
+  - { phrase: "back end", penalty: 35 }
+  - { phrase: "it infrastructure", penalty: 30 }
+  - { phrase: "cloud infrastructure", penalty: 30 }
+  - { phrase: "medical", penalty: 40 }
+  - { phrase: "clinical", penalty: 40 }
+  - { phrase: "nurse", penalty: 40 }
+  - { phrase: "physician", penalty: 40 }
+  - { phrase: "doctor", penalty: 40 }
+  - { phrase: "sales", penalty: 25 }
+  - { phrase: "business development", penalty: 20 }
+  - { phrase: "account executive", penalty: 25 }
+  - { phrase: "retail", penalty: 25 }
+  - { phrase: "accountant", penalty: 18 }
+  - { phrase: "accounting", penalty: 18 }
+  - { phrase: "finance officer", penalty: 15 }
+  - { phrase: "bookkeep", penalty: 18 }
+  - { phrase: "marketing manager", penalty: 15 }
+  - { phrase: "internship", penalty: 30 }
+  - { phrase: "intern", penalty: 25 }
+  - { phrase: "graduate programme", penalty: 25 }
+  - { phrase: "graduate scheme", penalty: 25 }
+  - { phrase: "trainee", penalty: 22 }
+  - { phrase: "entry level", penalty: 25 }
+  - { phrase: "entry-level", penalty: 25 }
+  - { phrase: "junior", penalty: 12 }
+
+# Countries/regions treated as favourable for location scoring.
+favourable_locations:
+  - bosnia and herzegovina
+  - sarajevo
+  - croatia
+  - serbia
+  - montenegro
+  - kosovo
+  - albania
+  - north macedonia
+  - western balkans
+  - slovenia
+  - austria
+  - italy
+  - france
+  - germany
+  - poland
+  - hungary
+  - romania
+  - bulgaria
+  - greece
+  - turkey
+  - netherlands
+  - belgium
+  - united kingdom
+  - remote
+  - europe
+
+# Languages the candidate is known NOT to hold natively / confirmed levels for.
+# Used only for mandatory-requirement checks.
+mandatory_language_rules:
+  native_required_languages_unmet: ["french", "italian", "german", "spanish", "arabic", "portuguese", "russian", "polish", "dutch"]
+  levels_unconfirmed: ["french", "italian"]
+
+sources:
+  reliefweb:
+    enabled: true
+    # Approved appname comes from RELIEFWEB_APPNAME env var / Streamlit secrets.
+    max_records: 60
+    page_size: 20
+    max_pages: 3
+  greenhouse:
+    enabled: true
+    boards: []   # add your chosen boards here, e.g. {name: "Acme Engineering", board: "acme", content: true}
+  lever:
+    enabled: true
+    boards: []   # e.g. {name: "Example NGO", company: "example", eu: false, include_description: true}
+  ashby:
+    enabled: true
+    boards: []   # e.g. {name: "Example Consultancy", org: "example", includeCompensation: true}
+
+dedup:
+  fingerprint_threshold: 88   # rapidfuzz token_set_ratio, 0-100
+
+sample:
+  enabled_by_default: false

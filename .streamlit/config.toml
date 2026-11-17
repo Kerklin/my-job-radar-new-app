@@ -1,0 +1,4 @@
+# Minimal theme so the dashboard is readable without any custom JS.
+[theme]
+base = "light"
+primaryColor = "#0b6e4f"
