@@ -1,38 +1,17 @@
 {
-  "ok": false,
-  "reason": "no_sources_configured",
+  "ok": true,
+  "sample_mode": true,
+  "total_written": 11,
+  "expired_removed": 1,
+  "duplicates_removed": 0,
   "sources": {
-    "reliefweb": {
+    "sample": {
       "enabled": true,
-      "collected": 0,
-      "skipped": 0,
-      "failed": 0,
-      "errors": [
-        "RELIEFWEB_APPNAME is not set; ReliefWeb was skipped."
-      ]
-    },
-    "greenhouse": {
-      "enabled": true,
-      "collected": 0,
-      "skipped": 0,
-      "failed": 0,
-      "errors": []
-    },
-    "lever": {
-      "enabled": true,
-      "collected": 0,
-      "skipped": 0,
-      "failed": 0,
-      "errors": []
-    },
-    "ashby": {
-      "enabled": true,
-      "collected": 0,
+      "collected": 12,
       "skipped": 0,
       "failed": 0,
       "errors": []
     }
   },
-  "feed_preserved": true,
-  "collected_at": "2026-11-17T17:32:35+00:00"
+  "collected_at": "2026-11-17T16:56:59+00:00"
 }
