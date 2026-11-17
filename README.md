@@ -1,5 +1,7 @@
 # 📡 Damir Job Radar
 
+https://my-job-radar-new-app.streamlit.app/
+
 Personal job-matching dashboard for construction / infrastructure / international-development roles.
 Collects vacancies daily, normalizes and deduplicates them, scores them against your profile with a
 **transparent, deterministic** model, and shows them ranked in a Streamlit dashboard.
