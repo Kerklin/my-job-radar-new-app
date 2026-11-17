@@ -326,6 +326,9 @@ sources:
     max_records: 60
     page_size: 20
     max_pages: 3
+    # Full-text search to focus on the target ecosystem. If the query is
+    # ever rejected (4xx), the collector retries without it (never fails the run).
+    query: "construction OR infrastructure OR rehabilitation OR procurement OR facilities OR WASH OR heritage OR solar OR engineer OR \"project manager\" OR \"site supervisor\""
   greenhouse:
     enabled: true
     boards: []   # add your chosen boards here, e.g. {name: "Acme Engineering", board: "acme", content: true}

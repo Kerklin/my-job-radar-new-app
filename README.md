@@ -25,11 +25,8 @@ Collects vacancies daily, normalizes and deduplicates them, scores them against 
 
 ```
 damir-job-radar/
+├── radar.py                # the whole engine + CLI: storage, scoring, sources, `python radar.py`
 ├── streamlit_app.py        # dashboard (entrypoint)
-├── collector.py            # CLI: collect -> dedupe -> score -> CSV
-├── sources.py              # ReliefWeb / Greenhouse / Lever / Ashby / manual adapters
-├── scoring.py              # deterministic 100-point scoring engine
-├── database.py             # JobRecord, CSV feed, statuses (SQLite)
 ├── config.yaml             # candidate profile, weights, keywords, sources
 ├── requirements.txt
 ├── tests/test_core.py
@@ -46,7 +43,7 @@ python -m venv .venv
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 pytest -q                      # should pass
-python collector.py --sample   # writes demo feed
+python radar.py --sample   # writes demo feed
 streamlit run streamlit_app.py
 ```
 
@@ -62,7 +59,7 @@ Open http://localhost:8501
 3. The workflow runs daily at **05:15 UTC**. To run it manually:
    - Repo → **Actions → Collect jobs daily → Run workflow**
 
-The workflow runs the test suite first, then the collector, then commits
+The workflow runs the test suite first, then the engine, then commits
 `data/latest_jobs.csv` **only if it changed**. If at least one source was attempted and *all* of them
 fail, the previous feed is kept and the run fails loudly instead of publishing an empty feed.
 If no source is configured at all (no `RELIEFWEB_APPNAME` secret and no ATS boards in
@@ -70,7 +67,7 @@ If no source is configured at all (no `RELIEFWEB_APPNAME` secret and no ATS boar
 summary instead of a false outage alarm — the feed is still preserved untouched. The workflow
 also emits a `::warning::` annotation in the job summary when `no_sources_configured` is present.
 
-**Exit codes** (`python collector.py`):
+**Exit codes** (`python radar.py`):
 
 | Code | Meaning | Feed |
 |---|---|---|
@@ -80,8 +77,11 @@ also emits a `::warning::` annotation in the job summary when `no_sources_config
 CI housekeeping: the workflow pins `ubuntu-24.04` and uses Node 24 actions
 (`actions/checkout@v7`, `actions/setup-python@v7`).
 
-> ReliefWeb requires an approved `appname`. Without the secret, ReliefWeb is skipped and you
-> still get any configured ATS feeds + the sample dataset.
+> **ReliefWeb v1 has been decommissioned.** This project uses the v2 API
+> (`POST https://api.reliefweb.int/v2/jobs`), which requires an **approved appname**
+> (free, a request form at https://apidoc.reliefweb.int/). Until the secret is set, the daily
+> Action collects nothing and the web page shows an empty feed with setup instructions — it will
+> never silently pass off sample/demo jobs as live ones.
 
 ## 5. Configuring your own job sources
 
@@ -153,7 +153,7 @@ Or upload the folder via GitHub's **Add file → Upload files**.
 
 | Symptom | Fix |
 |---|---|
-| Dashboard shows "Feed last updated: never" | Run `python collector.py --sample`, or check **Actions → Collect jobs daily** logs; ensure the workflow has `contents: write` permission. |
+| Dashboard shows "Feed last updated: never" | Run `python radar.py --sample`, or check **Actions → Collect jobs daily** logs; ensure the workflow has `contents: write` permission. |
 | "All sources failed" banner | ReliefWeb `RELIEFWEB_APPNAME` missing/not approved; check the Action log. The previous feed is preserved automatically. |
 | Green run but a `no_sources_configured` warning | Nothing was collected by design: no `RELIEFWEB_APPNAME` secret and no ATS boards in `config.yaml`. Set the secret (§4) or add boards (§5); the old feed stays live meanwhile. |
 | ReliefWeb skipped locally | `setx RELIEFWEB_APPNAME "your-appname"` then restart the terminal (or use a `.env` loader of your choice — secrets are never committed). |

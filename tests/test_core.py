@@ -17,9 +17,9 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from collector import dedup_records, filter_expired, load_config  # noqa: E402
-from database import JobRecord, csv_safe, parse_iso_date  # noqa: E402
-from scoring import canonical_url, normalize_text, score_job  # noqa: E402
+from radar import dedup_records, filter_expired, load_config  # noqa: E402
+from radar import JobRecord, csv_safe, parse_iso_date  # noqa: E402
+from radar import canonical_url, normalize_text, score_job  # noqa: E402
 
 CONFIG_PATH = Path(__file__).resolve().parents[1] / "config.yaml"
 CFG = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
@@ -265,3 +265,97 @@ def test_repeated_keywords_do_not_stack():
     # Repeating one keyword must not outscore matching three distinct ones.
     assert s1.score_breakdown["technical_competencies"]["points"] > \
            s2.score_breakdown["technical_competencies"]["points"]
+
+
+# ---------------------------------------------------------------------------
+# ReliefWeb v2 adapter (offline, stubbed HTTP)
+# ---------------------------------------------------------------------------
+
+def _v2_payload() -> dict:
+    return {
+        "status": "ok",
+        "totalCount": 1,
+        "data": [{
+            "id": 123,
+            "fields": {
+                "title": "Construction Engineer - Infrastructure Rehabilitation",
+                "source": [{"name": "UNOPS"}],
+                "url": "https://reliefweb.int/job/123",
+                "date": {"created": "2026-11-10T00:00:00+00:00",
+                         "closing": "2026-12-10T00:00:00+00:00"},
+                "body": "Site supervision, FIDIC, contract administration of works.",
+                "country": [{"name": "Bosnia and Herzegovina"}],
+                "city": [{"name": "Sarajevo"}],
+                "career_categories": [{"name": "Construction Engineering"}],
+                "experience": [{"name": "Senior"}],
+            },
+        }],
+    }
+
+
+class _StubResponse:
+    def __init__(self, code: int, payload: dict | None = None):
+        self.status_code = code
+        self._payload = payload or {}
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            import requests
+            raise requests.HTTPError(f"{self.status_code} Client Error: for url", response=self)
+
+    def json(self):
+        return self._payload
+
+
+class _StubSession:
+    """Returns 400 whenever the request body contains a 'query' key, else 200 with a v2 payload."""
+
+    def __init__(self, mode: str):
+        self.mode = mode          # "ok" | "rejected-appname" | "query-400"
+        self.posts: list[dict] = []
+        self.headers: dict = {}
+
+    def post(self, url, json=None, timeout=None):
+        self.posts.append(json or {})
+        if self.mode == "rejected-appname":
+            return _StubResponse(403, {"status": 403, "error": {"message": "not approved"}})
+        if self.mode == "query-400" and (json or {}).get("query"):
+            return _StubResponse(400, {"status": 400, "error": {"message": "bad query"}})
+        return _StubResponse(200, _v2_payload())
+
+
+def test_reliefweb_v2_records_are_parsed():
+    from radar import fetch_reliefweb
+    cfg = {"sources": {"reliefweb": {"enabled": True, "page_size": 1, "max_pages": 1, "max_records": 5,
+                                     "query": "construction"}}}
+    records, stats = fetch_reliefweb(cfg, "some-approved-appname", session=_StubSession("ok"))
+    assert stats["failed"] == 0
+    assert len(records) == 1
+    rec = records[0]
+    assert rec.organization == "UNOPS"
+    assert rec.job_family == "Construction Engineering"
+    assert rec.posted_date == "2026-11-10"
+    assert rec.closing_date == "2026-12-10"
+    assert rec.grade == "Senior"
+    assert "FIDIC" in rec.description
+
+
+def test_reliefweb_v2_query_4xx_falls_back_to_unqueried_request():
+    from radar import fetch_reliefweb
+    cfg = {"sources": {"reliefweb": {"enabled": True, "page_size": 1, "max_pages": 1, "max_records": 5,
+                                     "query": "construction OR infrastructure"}}}
+    session = _StubSession("query-400")
+    records, stats = fetch_reliefweb(cfg, "some-approved-appname", session=session)
+    assert stats["failed"] == 0
+    assert len(records) == 1                       # fell back to the un-queried request
+    assert any("query" in (p or {}) for p in session.posts)          # tried with query first
+    assert any("query" not in (p or {}) for p in session.posts)      # then without
+
+
+def test_reliefweb_v2_unapproved_appname_reports_failure_without_network():
+    from radar import fetch_reliefweb
+    cfg = {"sources": {"reliefweb": {"enabled": True, "page_size": 1, "max_pages": 1, "max_records": 5}}}
+    records, stats = fetch_reliefweb(cfg, "definitely-not-approved", session=_StubSession("rejected-appname"))
+    assert records == []
+    assert stats["failed"] == 1
+    assert any("approved appname" in e for e in stats["errors"])

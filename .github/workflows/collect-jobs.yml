@@ -39,7 +39,7 @@ jobs:
       - name: Run collector
         env:
           RELIEFWEB_APPNAME: ${{ secrets.RELIEFWEB_APPNAME }}
-        run: python collector.py
+        run: python radar.py
 
       - name: Write job summary
         if: always()
